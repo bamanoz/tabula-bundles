@@ -16,10 +16,10 @@ if ROOT not in sys.path:
 
 os.environ.setdefault("TABULA_HOME", ROOT)
 
-from skills.lib import load_skill_config
-from skills.lib.paths import skill_logs_dir
-from skills.lib.kernel_client import KernelConnection
-from skills.lib.protocol import (
+from skills._lib import load_skill_config
+from skills._lib.paths import skill_logs_dir
+from skills._lib.kernel_client import KernelConnection
+from skills._lib.protocol import (
     MSG_CONNECT, MSG_HOOK, MSG_HOOK_RESULT, HOOK_PASS,
     HOOK_AFTER_MESSAGE, HOOK_AFTER_TOOL_CALL, HOOK_SESSION_START,
 )

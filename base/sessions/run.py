@@ -25,9 +25,9 @@ if ROOT not in sys.path:
 
 os.environ.setdefault("TABULA_HOME", ROOT)
 
-from skills.lib import load_skill_config
-from skills.lib.paths import skill_data_dir, skill_logs_dir
-from skills.lib.protocol import MSG_MESSAGE
+from skills._lib import load_skill_config
+from skills._lib.paths import skill_data_dir, skill_logs_dir
+from skills._lib.protocol import MSG_MESSAGE
 
 TABULA_URL = os.environ.get("TABULA_URL", "ws://localhost:8089/ws")
 TABULA_HOME = os.environ.get("TABULA_HOME", os.path.join(os.path.expanduser("~"), ".tabula"))
@@ -87,8 +87,8 @@ def cmd_info(args):
 
 def cmd_send(args):
     """Send a message to another session."""
-    from skills.lib.kernel_client import KernelConnection
-    from skills.lib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
+    from skills._lib.kernel_client import KernelConnection
+    from skills._lib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
     conn = KernelConnection(TABULA_URL)
     conn.send({
         "type": MSG_CONNECT,
@@ -166,8 +166,8 @@ class SessionRegistry:
         self.conn = None
 
     def _connect(self):
-        from skills.lib.kernel_client import KernelConnection
-        from skills.lib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
+        from skills._lib.kernel_client import KernelConnection
+        from skills._lib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
         self.conn = KernelConnection(TABULA_URL)
         self.conn.send({
             "type": MSG_CONNECT,

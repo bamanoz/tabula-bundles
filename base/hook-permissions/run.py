@@ -12,9 +12,9 @@ ROOT = os.environ.get("TABULA_HOME", os.path.expanduser("~/.tabula"))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from skills.lib.paths import skill_config_dir
-from skills.lib.kernel_client import KernelConnection
-from skills.lib.protocol import (
+from skills._lib.paths import skill_config_dir
+from skills._lib.kernel_client import KernelConnection
+from skills._lib.protocol import (
     MSG_CONNECT, MSG_HOOK, MSG_HOOK_RESULT, HOOK_PASS, HOOK_BLOCK,
     HOOK_BEFORE_TOOL_CALL, TOOL_SHELL_EXEC, TOOL_PROCESS_SPAWN,
 )

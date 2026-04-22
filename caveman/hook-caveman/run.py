@@ -14,7 +14,7 @@ ROOT = os.environ.get("TABULA_HOME", os.path.expanduser("~/.tabula"))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from skills.lib.kernel_client import KernelConnection
+from skills._lib.kernel_client import KernelConnection
 
 TABULA_URL  = os.environ.get("TABULA_URL", "ws://localhost:8089/ws")
 TABULA_HOME = os.environ.get("TABULA_HOME", os.path.expanduser("~/.tabula"))

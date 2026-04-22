@@ -229,7 +229,7 @@ loads this at startup.
 
 ## Shared library
 
-`skills/lib/` provides Python helpers:
+`skills/_lib/` provides Python helpers:
 
 - `kernel_client.py` — WebSocket connection to kernel
 - `driver_runtime.py` — base class for LLM drivers

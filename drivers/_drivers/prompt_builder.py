@@ -11,12 +11,12 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from skills.lib.paths import (
+from skills._lib.paths import (
     skills_dir as skills_dir_path,
     templates_dir as templates_dir_path,
     tabula_home as tabula_home_path,
 )
-from skills.lib.protocol import (
+from skills._lib.protocol import (
     DEFAULT_KERNEL_TOOLS,
     TOOL_SHELL_EXEC,
     TOOL_PROCESS_SPAWN,

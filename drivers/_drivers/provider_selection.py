@@ -8,8 +8,8 @@ import shlex
 import sys
 from pathlib import Path
 
-from skills.lib.paths import skills_dir
-from skills.lib.config import SkillConfigError, load_global_config, load_skill_config
+from skills._lib.paths import skills_dir
+from skills._lib.config import SkillConfigError, load_global_config, load_skill_config
 
 
 PROVIDER_ALIASES = {

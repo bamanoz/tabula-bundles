@@ -7,9 +7,9 @@ import os
 from collections import deque
 from dataclasses import dataclass
 
-from skills.lib.kernel_client import KernelConnection
+from skills._lib.kernel_client import KernelConnection
 from .prompt_builder import build_subagent_system_prompt
-from skills.lib.protocol import (
+from skills._lib.protocol import (
     MSG_CONNECT, MSG_JOIN, MSG_INIT, MSG_MESSAGE, MSG_TOOL_USE, MSG_TOOL_RESULT,
     MSG_DONE,
 )

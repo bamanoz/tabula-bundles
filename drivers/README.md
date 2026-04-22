@@ -14,4 +14,4 @@ Ships:
 
 Anything in `_drivers/` is installed as a sibling `skills/_drivers/` inside the
 distro, and skill code imports it as `skills._drivers.<module>`. This keeps
-driver-specific code out of the core `skills/lib/` contract.
+driver-specific code out of the core `skills/_lib/` contract.
