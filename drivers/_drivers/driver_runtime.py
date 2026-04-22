@@ -9,10 +9,10 @@ import re
 import time
 from dataclasses import dataclass
 
-from .kernel_client import KernelConnection
-from .paths import skill_data_dir
+from skills.lib.kernel_client import KernelConnection
+from skills.lib.paths import skill_data_dir
 from .prompt_builder import build_main_system_prompt
-from .protocol import (
+from skills.lib.protocol import (
     MSG_CONNECT, MSG_CONNECTED, MSG_JOIN, MSG_JOINED, MSG_INIT,
     MSG_MESSAGE, MSG_TOOL_USE, MSG_TOOL_RESULT, MSG_DONE,
     MSG_STREAM_START, MSG_STREAM_DELTA, MSG_STREAM_END,

@@ -960,7 +960,7 @@ import re
 import shlex
 import sys
 
-from .paths import testing_skills_dir
+from skills.lib.paths import testing_skills_dir
 
 
 def _venv_python() -> str:
