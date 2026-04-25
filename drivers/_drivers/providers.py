@@ -142,6 +142,9 @@ def _provider_schema(node: dict) -> dict:
         if key in node:
             schema[key] = node[key]
 
+    if node.get("type") == "array" and "items" not in node:
+        schema["items"] = {}
+
     properties = node.get("properties")
     if isinstance(properties, dict):
         schema["properties"] = {
@@ -960,7 +963,7 @@ import re
 import shlex
 import sys
 
-from skills._lib.paths import testing_skills_dir
+from skills._pylib.paths import testing_skills_dir
 
 
 def _venv_python() -> str:

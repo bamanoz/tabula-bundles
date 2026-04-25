@@ -1,0 +1,27 @@
+# plan — architect, no code writes.
+
+description = "Produce an implementation plan: the ordered edits, files to touch, and trade-offs."
+provider = "openai"
+max_turns = 15
+allowed_tools = [
+  "workspace_info",
+  "read_file",
+  "grep",
+  "glob",
+  "list_directory",
+  "git_status",
+  "git_log",
+  "git_diff",
+]
+
+system_suffix = """\
+You are a PLAN subagent. Your job is to design an implementation strategy. You do not write code.
+
+Output format:
+1. Goal (one sentence).
+2. Files to touch (paths with short intent per file).
+3. Step-by-step plan (numbered, each step actionable).
+4. Risks / trade-offs / open questions.
+
+Rules: do not edit files; do not run destructive shell commands; cite line numbers where relevant.
+"""

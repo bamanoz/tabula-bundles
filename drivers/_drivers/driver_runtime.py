@@ -9,10 +9,11 @@ import re
 import time
 from dataclasses import dataclass
 
-from skills._lib.kernel_client import KernelConnection
-from skills._lib.paths import skill_data_dir
+from skills._pylib.kernel_client import KernelConnection
+from skills._pylib.paths import skill_data_dir
 from .prompt_builder import build_main_system_prompt
-from skills._lib.protocol import (
+from .agents import load_agents, resolve_turn, TurnConfig
+from skills._pylib.protocol import (
     MSG_CONNECT, MSG_CONNECTED, MSG_JOIN, MSG_JOINED, MSG_INIT,
     MSG_MESSAGE, MSG_TOOL_USE, MSG_TOOL_RESULT, MSG_DONE,
     MSG_STREAM_START, MSG_STREAM_DELTA, MSG_STREAM_END,
@@ -30,6 +31,7 @@ class DriverConfig:
     name: str
     url: str
     session: str = "main"
+    model: str | None = None
 
 
 def extract_spawn_id(command: str) -> str | None:
@@ -65,6 +67,10 @@ class DriverRuntime:
         self._known_subagent_ids: set[str] = set()
         self._early_results: list[dict] = []
         self._needs_turn = False
+        self._tools: list[dict] = []
+        self._context = ""
+        self._agents = load_agents()
+        self._provider_key: tuple[str, str, str | None] | None = None
 
         self._tool_to_spawn_id: dict[str, str] = {}
         self._pid_to_agent_id: dict[int, str] = {}
@@ -96,6 +102,15 @@ class DriverRuntime:
         self.aborted = True
         if self.provider:
             self.provider.abort()
+
+    def close(self):
+        if not self._history_file:
+            return
+        try:
+            self._history_file.close()
+        except OSError:
+            pass
+        self._history_file = None
 
     def connect(self):
         self.conn.send(
@@ -275,15 +290,38 @@ class DriverRuntime:
         self._needs_turn = True
 
     def handle_init(self, msg: dict):
-        prompt = build_main_system_prompt(provider=self.config.name)
-        context = msg.get("context", "").strip()
-        if context:
-            prompt += f"\n\n{context}"
-        # Inject session identity so LLM uses correct --parent-session
+        self._tools = msg.get("tools", []) or []
+        self._context = msg.get("context", "").strip()
+        meta = msg.get("meta") or {}
+        if isinstance(meta, dict) and isinstance(meta.get("agents"), list):
+            self.log(f"received {len(meta['agents'])} agents from boot metadata")
+        self._ensure_provider(
+            resolve_turn(
+                self._agents,
+                agent_name="build",
+                model_meta=None,
+                default_provider=self.config.name,
+                default_model=self.config.model,
+            )
+        )
+
+    def _ensure_provider(self, turn: TurnConfig):
+        key = (turn.agent.name, turn.provider, turn.model)
+        if self.provider is not None and self._provider_key == key:
+            return
+        prompt = build_main_system_prompt(
+            provider=turn.provider,
+            agent_name=turn.agent.name,
+            agent_prompt=turn.agent.prompt,
+            visible_tools=self._tools,
+        )
+        if self._context:
+            prompt += f"\n\n{self._context}"
         prompt += f"\n\nYour session name is `{self.config.session}`."
-        self.provider = self.provider_factory(prompt, msg.get("tools", []))
+        self.provider = self.provider_factory(prompt, self._tools, turn.provider, turn.model)
+        self._provider_key = key
         self._restore_history()
-        self.log("provider initialized")
+        self.log(f"provider initialized agent={turn.agent.name} provider={turn.provider} model={turn.model}")
 
     def _restore_history(self):
         """Load history.jsonl and replay into provider for session resume.
@@ -331,9 +369,6 @@ class DriverRuntime:
             self.log(f"restored {len(all_entries)} history entries")
 
     def handle_message(self, msg: dict):
-        if not self.provider:
-            return
-
         text = msg.get("text", "")
         msg_id = msg.get("id", "")
         from_session = msg.get("from_session", "")
@@ -345,7 +380,24 @@ class DriverRuntime:
         if from_session:
             text = f"<cross_session from=\"{from_session}\">\n{text}\n</cross_session>"
 
-        self._write_history({"role": "user", "text": text})
+        meta = msg.get("meta") if isinstance(msg.get("meta"), dict) else {}
+        turn = resolve_turn(
+            self._agents,
+            agent_name=meta.get("agent") if isinstance(meta, dict) else None,
+            model_meta=meta.get("model") if isinstance(meta, dict) else None,
+            default_provider=self.config.name,
+            default_model=self.config.model,
+        )
+        self._ensure_provider(turn)
+        if not self.provider:
+            return
+
+        self._write_history({
+            "role": "user",
+            "text": text,
+            "agent": turn.agent.name,
+            "model": {"provider": turn.provider, "model": turn.model},
+        })
         self.provider.add_user_text(text)
         self.process_turn()
 

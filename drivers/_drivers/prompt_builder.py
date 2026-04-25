@@ -11,12 +11,12 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from skills._lib.paths import (
+from skills._pylib.paths import (
     skills_dir as skills_dir_path,
     templates_dir as templates_dir_path,
     tabula_home as tabula_home_path,
 )
-from skills._lib.protocol import (
+from skills._pylib.protocol import (
     DEFAULT_KERNEL_TOOLS,
     TOOL_SHELL_EXEC,
     TOOL_PROCESS_SPAWN,
@@ -78,11 +78,6 @@ else:
 
 
 def include_skill(name: str, provider: str | None = None) -> bool:
-    provider = provider or current_provider()
-    if name.startswith("driver-"):
-        return name == f"driver-{provider}"
-    if name.startswith("subagent-"):
-        return name == f"subagent-{provider}"
     return True
 
 
@@ -170,6 +165,10 @@ def _read_template(name: str, *, visible_tools: list[dict] | None = None) -> str
     if name == "TOOLS.md":
         return _render_tools_template(visible_tools=visible_tools)
     path = os.path.join(templates_dir(), name)
+    if not os.path.isfile(path):
+        raise FileNotFoundError(
+            f"required template {name!r} is missing at {path}; reinstall or fix the active distro"
+        )
     with open(path) as f:
         return f.read().strip()
 
@@ -326,6 +325,8 @@ def format_mcp_tools(tools_by_server: dict[str, list[dict]]) -> str:
 def build_main_system_prompt(
     provider: str | None = None,
     *,
+    agent_name: str | None = None,
+    agent_prompt: str | None = None,
     skills: list[str] | None = None,
     mcp_tools: dict[str, list[dict]] | None = None,
     visible_tools: list[dict] | None = None,
@@ -338,6 +339,9 @@ def build_main_system_prompt(
     static = [_read_template("SYSTEM.md", visible_tools=visible_tools)]
     if _is_first_run():
         static.append(FIRST_RUN_INSTRUCTION)
+    if agent_prompt:
+        heading = f"## Agent: {agent_name}" if agent_name else "## Agent"
+        static.append(f"{heading}\n\n{agent_prompt.strip()}")
     static.extend([
         _read_template("TOOLS.md", visible_tools=visible_tools),
         _read_template("GUIDELINES.md", visible_tools=visible_tools),

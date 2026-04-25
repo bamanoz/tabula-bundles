@@ -20,7 +20,7 @@ ROOT = os.environ.get("TABULA_HOME", os.path.expanduser("~/.tabula"))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from skills._lib.paths import skill_data_dir
+from skills._pylib.paths import skill_data_dir
 
 AUTH_DIR = skill_data_dir("pair")
 

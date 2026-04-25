@@ -1,0 +1,11 @@
+# general — generic assistant subagent; minimal preset.
+
+description = "General-purpose subagent with the default tool set. Use when no more specific preset fits."
+provider = "openai"
+max_turns = 20
+allowed_tools = []  # empty ⇒ no explicit whitelist; relies on parent policy.
+
+system_suffix = """\
+You are a GENERAL subagent. Follow the task you were given, stay inside the project root,
+ground your work in the code, and do not commit or push on the user's behalf.
+"""

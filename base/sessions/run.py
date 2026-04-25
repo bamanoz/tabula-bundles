@@ -15,6 +15,7 @@ import json
 import os
 import sys
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -25,9 +26,9 @@ if ROOT not in sys.path:
 
 os.environ.setdefault("TABULA_HOME", ROOT)
 
-from skills._lib import load_skill_config
-from skills._lib.paths import skill_data_dir, skill_logs_dir
-from skills._lib.protocol import MSG_MESSAGE
+from skills._pylib import load_skill_config
+from skills._pylib.paths import skill_data_dir, skill_logs_dir
+from skills._pylib.protocol import MSG_MESSAGE
 
 TABULA_URL = os.environ.get("TABULA_URL", "ws://localhost:8089/ws")
 TABULA_HOME = os.environ.get("TABULA_HOME", os.path.join(os.path.expanduser("~"), ".tabula"))
@@ -42,20 +43,21 @@ IDLE_TIMEOUT = SETTINGS["idle_timeout"]
 POLL_INTERVAL = SETTINGS["poll_interval"]
 
 
-def _http_base() -> str:
-    """Derive HTTP base URL from TABULA_URL (ws://host:port/ws → http://host:port)."""
-    url = TABULA_URL
-    url = url.replace("wss://", "https://").replace("ws://", "http://")
-    if url.endswith("/ws"):
-        url = url[:-3]
-    return url
+def _sessions_url() -> str:
+    """Derive /sessions URL from TABULA_URL and prefer IPv4 for localhost."""
+    parsed = urllib.parse.urlsplit(TABULA_URL)
+    scheme = "https" if parsed.scheme == "wss" else "http"
+    netloc = parsed.netloc or "127.0.0.1:8089"
+    if netloc.startswith("localhost:"):
+        netloc = "127.0.0.1:" + netloc.rsplit(":", 1)[1]
+    return urllib.parse.urlunsplit((scheme, netloc, "/sessions", "", ""))
 
 
 def _fetch_sessions() -> dict:
     """GET /sessions from the kernel."""
-    url = _http_base() + "/sessions"
-    req = urllib.request.Request(url)
-    with urllib.request.urlopen(req, timeout=5) as resp:
+    req = urllib.request.Request(_sessions_url())
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(req, timeout=5) as resp:
         return json.loads(resp.read())
 
 
@@ -87,8 +89,8 @@ def cmd_info(args):
 
 def cmd_send(args):
     """Send a message to another session."""
-    from skills._lib.kernel_client import KernelConnection
-    from skills._lib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
+    from skills._pylib.kernel_client import KernelConnection
+    from skills._pylib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
     conn = KernelConnection(TABULA_URL)
     conn.send({
         "type": MSG_CONNECT,
@@ -166,8 +168,8 @@ class SessionRegistry:
         self.conn = None
 
     def _connect(self):
-        from skills._lib.kernel_client import KernelConnection
-        from skills._lib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
+        from skills._pylib.kernel_client import KernelConnection
+        from skills._pylib.protocol import MSG_CONNECT, MSG_JOIN, MSG_MESSAGE
         self.conn = KernelConnection(TABULA_URL)
         self.conn.send({
             "type": MSG_CONNECT,

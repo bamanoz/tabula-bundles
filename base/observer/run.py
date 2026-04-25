@@ -17,8 +17,8 @@ ROOT = os.environ.get("TABULA_HOME", os.path.expanduser("~/.tabula"))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from skills._lib.kernel_client import KernelConnection
-from skills._lib.protocol import (
+from skills._pylib.kernel_client import KernelConnection
+from skills._pylib.protocol import (
     MSG_CONNECT, MSG_HOOK,
     HOOK_AFTER_MESSAGE, HOOK_AFTER_TOOL_CALL,
     HOOK_SESSION_END, HOOK_AFTER_SPAWN,
@@ -119,7 +119,10 @@ metrics = Metrics()
 def sessions_url(kernel_url: str) -> str:
     parsed = urlparse.urlsplit(kernel_url)
     scheme = "https" if parsed.scheme == "wss" else "http"
-    return urlparse.urlunsplit((scheme, parsed.netloc, "/sessions", "", ""))
+    netloc = parsed.netloc or "127.0.0.1:8089"
+    if netloc.startswith("localhost:"):
+        netloc = "127.0.0.1:" + netloc.rsplit(":", 1)[1]
+    return urlparse.urlunsplit((scheme, netloc, "/sessions", "", ""))
 
 
 def run_hook_listener(url: str):

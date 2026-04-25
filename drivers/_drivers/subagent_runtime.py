@@ -7,9 +7,10 @@ import os
 from collections import deque
 from dataclasses import dataclass
 
-from skills._lib.kernel_client import KernelConnection
+from skills._pylib.kernel_client import KernelConnection
+from skills._pylib.paths import ensure_parent, skill_state_dir
 from .prompt_builder import build_subagent_system_prompt
-from skills._lib.protocol import (
+from skills._pylib.protocol import (
     MSG_CONNECT, MSG_JOIN, MSG_INIT, MSG_MESSAGE, MSG_TOOL_USE, MSG_TOOL_RESULT,
     MSG_DONE,
 )
@@ -117,6 +118,8 @@ class SubagentRuntime:
         return "<error>subagent max turns reached</error>"
 
     def _send_result(self, text: str):
+        result_file = ensure_parent(skill_state_dir("subagents") / f"{self.config.agent_id}.result.txt")
+        result_file.write_text(text, encoding="utf-8")
         self.conn.send(
             {
                 "type": MSG_MESSAGE,

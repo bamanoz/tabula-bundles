@@ -37,7 +37,7 @@ skills, but it still participates in early process setup.
 ### Skill config
 
 Migrated built-in skills declare their config contract in `SKILL.config.json`
-and load resolved values through `skills/_lib/config.py`.
+and load resolved values through `skills/_pylib/config.py`.
 
 For core built-in skills, non-secret config now lives centrally in:
 
@@ -80,7 +80,7 @@ Migrated skills can resolve secrets from:
 - `~/.tabula/secrets.json`
 - structured secret refs declared in skill config (`store`, `env`, `file`)
 
-Some skills intentionally share secrets. Example: `subagent-openai` falls back
+Some skills intentionally share secrets. Example: `subagent` falls back
 to `driver-openai.api_key` if its own secret is not present.
 
 ### TABULA_HOME layout
@@ -128,7 +128,7 @@ owns directly:
 
 ### Provider resolution
 
-`skills/_lib/provider_selection.py` resolves the active provider.
+`skills/_drivers/provider_selection.py` resolves the active provider.
 
 Rules:
 
@@ -356,11 +356,10 @@ Send `stream_start`, `stream_delta`, `stream_end`, `tool_use`, `done`.
 
 | Skill | Provider |
 |-------|----------|
-| `subagent-anthropic` | Claude |
-| `subagent-openai` | OpenAI |
+| `subagent` | OpenAI or Anthropic, selected per spawn |
 | `subagent-mock` | Mock (testing) |
 
-Usage: `process_spawn python3 skills/subagent-anthropic/run.py --id <id> --parent-session <session> --task "<task>"`
+Usage: `process_spawn python3 skills/subagent/run.py --provider anthropic --id <id> --parent-session <session> --task "<task>"`
 Optional: `--timeout N` (0=oneshot, default). Results delivered as messages to parent session.
 
 ### Infrastructure
@@ -386,7 +385,7 @@ Optional: `--timeout N` (0=oneshot, default). Results delivered as messages to p
 
 ### Library
 
-`skills/_lib/` — shared Python modules:
+`skills/_pylib/` — shared Python modules:
 - `kernel_client.KernelConnection` — thread-safe WebSocket wrapper
 - `driver_runtime.DriverRuntime` — driver orchestration (streaming, tool calls, subagent collection)
 - `subagent_runtime.SubagentRuntime` — subagent orchestration
@@ -463,7 +462,7 @@ Example shell_exec allowlist — allow only specific commands:
 ## Wire Protocol
 
 All communication is JSON over WebSocket. Message types are defined in
-`skills/_lib/protocol.py` (Python) and `internal/kernel/protocol.go` (Go).
+`skills/_pylib/protocol.py` (Python) and `internal/kernel/protocol.go` (Go).
 
 ### Protocol version
 

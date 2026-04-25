@@ -8,8 +8,8 @@ import shlex
 import sys
 from pathlib import Path
 
-from skills._lib.paths import skills_dir
-from skills._lib.config import SkillConfigError, load_global_config, load_skill_config
+from skills._pylib.paths import skills_dir
+from skills._pylib.config import SkillConfigError, load_global_config, load_skill_config
 
 
 PROVIDER_ALIASES = {
@@ -55,28 +55,42 @@ def normalize_provider(requested: str | None, *, default_provider: str | None = 
 def provider_skill_dir(provider: str, *, tabula_home: str | Path | None = None) -> Path:
     if tabula_home is not None:
         home = _tabula_home(tabula_home)
-        return home / "skills" / f"driver-{provider}"
-    return skills_dir() / f"driver-{provider}"
+        return home / "skills" / "driver"
+    return skills_dir() / "driver"
+
+
+def unified_driver_script_path(*, tabula_home: str | Path | None = None) -> Path:
+    if tabula_home is not None:
+        home = _tabula_home(tabula_home)
+        return home / "skills" / "driver" / "run.py"
+    return skills_dir() / "driver" / "run.py"
 
 
 def provider_script_path(provider: str, *, tabula_home: str | Path | None = None) -> Path:
-    return provider_skill_dir(provider, tabula_home=tabula_home) / "run.py"
+    return unified_driver_script_path(tabula_home=tabula_home)
 
 
 def ensure_provider_installed(provider: str, *, tabula_home: str | Path | None = None) -> Path:
-    script = provider_script_path(provider, tabula_home=tabula_home)
+    normalize_provider(provider)
+    script = unified_driver_script_path(tabula_home=tabula_home)
     if not script.is_file():
-        raise ProviderSelectionError(f"provider {provider!r} is not installed; driver script not found: {script}")
+        raise ProviderSelectionError(f"unified driver is not installed; driver script not found: {script}")
     return script
 
 
 def ensure_provider_ready(provider: str, *, tabula_home: str | Path | None = None) -> dict:
+    provider = normalize_provider(provider)
     skill_dir = provider_skill_dir(provider, tabula_home=tabula_home)
     ensure_provider_installed(provider, tabula_home=tabula_home)
     try:
-        return load_skill_config(skill_dir, tabula_home_override=_tabula_home(tabula_home))
+        settings = load_skill_config(skill_dir, tabula_home_override=_tabula_home(tabula_home))
     except SkillConfigError as exc:
         raise ProviderSelectionError(f"provider {provider!r} is not configured: {exc}") from exc
+    prefix = provider.replace("-", "_")
+    required_key = f"{prefix}_api_key"
+    if not settings.get(required_key):
+        raise ProviderSelectionError(f"provider {provider!r} is not configured: missing {required_key}")
+    return settings
 
 
 def resolve_provider(
@@ -101,9 +115,12 @@ def build_driver_command(
     tabula_home: str | Path | None = None,
     python_executable: str | None = None,
 ) -> str:
-    script = ensure_provider_installed(provider, tabula_home=tabula_home)
+    ensure_provider_ready(provider, tabula_home=tabula_home)
+    script = unified_driver_script_path(tabula_home=tabula_home)
+    if not script.is_file():
+        raise ProviderSelectionError(f"unified driver is not installed; driver script not found: {script}")
     python_executable = python_executable or sys.executable
-    return shlex.join([python_executable, str(script)])
+    return shlex.join([python_executable, str(script), "--provider", provider])
 
 
 def resolve_driver_command(

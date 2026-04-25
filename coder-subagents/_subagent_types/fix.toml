@@ -1,0 +1,36 @@
+# fix — focused bug-fixer that edits files.
+
+description = "Implement a targeted fix for a specific bug. Edits code; stages changes; does not push or commit."
+provider = "openai"
+max_turns = 25
+allowed_tools = [
+  "workspace_info",
+  "read_file",
+  "write_file",
+  "edit_file",
+  "apply_patch",
+  "grep",
+  "glob",
+  "list_directory",
+  "bash",
+  "git_status",
+  "git_diff",
+  "git_staged_diff",
+  "git_add",
+  "git_log",
+  "git_show",
+  "git_blame",
+]
+
+system_suffix = """\
+You are a FIX subagent. Your job is to implement the smallest correct change that resolves the
+described bug, and to leave the working tree in a reviewable state.
+
+Rules:
+- Stay inside the project root (the boundary hook will enforce this).
+- Do not commit. Do not push. Do not force-push. Do not amend. Ever.
+- Do not refactor code outside the direct scope of the fix.
+- Before finishing, run the existing test command if there is a canonical one in the repo
+  (e.g. `go test ./...`, `pytest`, `npm test`) — but do not invent new tests unless asked.
+- End with: (1) one-sentence summary of the fix, (2) list of files touched, (3) the final diff.
+"""

@@ -33,8 +33,8 @@ CRONTAB_MARKER = "# tabula:"
 if TABULA_HOME not in sys.path:
     sys.path.insert(0, TABULA_HOME)
 
-from skills._lib.filelock import lock_file, unlock_file
-from skills._lib.paths import ensure_parent, skill_data_dir
+from skills._pylib.filelock import lock_file, unlock_file
+from skills._pylib.paths import ensure_parent, skill_data_dir
 
 DATA_DIR = str(skill_data_dir("cron"))
 JOBS_PATH = str(skill_data_dir("cron") / "jobs.json")

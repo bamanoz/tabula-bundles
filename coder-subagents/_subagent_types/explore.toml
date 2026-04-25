@@ -1,0 +1,26 @@
+# explore — read-only investigator.
+
+description = "Explore the codebase, read files, run greps, gather facts. Never modifies files."
+provider = "openai"
+max_turns = 15
+allowed_tools = [
+  "workspace_info",
+  "read_file",
+  "grep",
+  "glob",
+  "list_directory",
+  "git_status",
+  "git_log",
+  "git_show",
+  "git_blame",
+]
+
+system_suffix = """\
+You are an EXPLORE subagent. Your job is to investigate the codebase and return a concise,
+fact-dense report. Ground every claim in a file path (and ideally line number).
+
+Rules:
+- Never modify files, never run shell mutations, never commit.
+- Prefer targeted greps/reads over broad scans.
+- End with a short summary: the question asked, the files you inspected, and the findings.
+"""

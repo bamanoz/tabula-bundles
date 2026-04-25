@@ -1,0 +1,6 @@
+[bundle]
+name    = "coder-subagents"
+version = "0.1.0"
+
+[requires]
+kernel = ">=0.8.0,<1.0.0"
